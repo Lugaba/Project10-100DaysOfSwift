@@ -14,6 +14,24 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
         super.viewDidLoad()
         
         navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addNewPerson))
+        
+        let defaults = UserDefaults.standard
+//        if let savedPeople = defaults.object(forKey: "people") as? Data {
+//            if let decodedPeople = try? NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(savedPeople) as? [Person] {
+//                people = decodedPeople
+//            }
+//        }
+        
+        if let savedPeople = defaults.object(forKey: "people") as? Data {
+            let jsonDecoder = JSONDecoder()
+            
+            do {
+                people = try jsonDecoder.decode([Person].self, from: savedPeople)
+            } catch {
+                print("Failed to load people.")
+            }
+        }
+        
         // Do any additional setup after loading the view.
     }
     
@@ -47,6 +65,8 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
         ac.addAction(UIAlertAction(title: "Delete", style: .destructive) {
             [weak self] _ in
             self?.people.remove(at: indexPath.row)
+            //self?.save()
+            self?.save1()
             collectionView.reloadData()
         })
         
@@ -59,6 +79,8 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
                 [weak self, weak ac1] _ in
                 guard let newName = ac1?.textFields?[0].text else {return}
                 person.name = newName
+                //self?.save()
+                self?.save1()
                 self?.collectionView.reloadData()
             })
             
@@ -75,7 +97,7 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
     @objc func addNewPerson() {
         let ac = UIAlertController(title: "Camera ou Library?", message: nil, preferredStyle: .alert)
         ac.addAction(UIAlertAction(title: "Camera", style: .default, handler: addNewPersonImageCamera))
-        ac.addAction(UIAlertAction(title: "Libary", style: .default, handler: addNewPersonImageLibrary))
+        ac.addAction(UIAlertAction(title: "Library", style: .default, handler: addNewPersonImageLibrary))
         present(ac, animated: true)
     }
     
@@ -115,6 +137,8 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
         
         let person = Person(name: "Unknow", image: imageName)
         people.append(person)
+        //save()
+        save1()
         collectionView.reloadData()
         
         dismiss(animated: true)
@@ -123,6 +147,24 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
     func getDocumentsDirectory() -> URL {
         let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
         return paths[0]
+    }
+    
+//    func save() {
+//        if let savedData = try? NSKeyedArchiver.archivedData(withRootObject: people, requiringSecureCoding: false) {
+//            let defaults = UserDefaults.standard
+//            defaults.set(savedData, forKey: "people")
+//        }
+//    }
+    
+    func save1() {
+        let jsonEncoder = JSONEncoder()
+        
+        if let savedData = try? jsonEncoder.encode(people) {
+            let defaults = UserDefaults.standard
+            defaults.set(savedData, forKey: "people")
+        } else {
+            print("Failed to save people.")
+        }
     }
 }
 
